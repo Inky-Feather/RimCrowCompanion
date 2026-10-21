@@ -5,4 +5,4 @@
 **/packages/
 **/.git-legacy-history/
 .ai-usage/
-Build.Local.props
+/Source/Build.Local.props

@@ -1,6 +1,6 @@
 <Project>
-  <Import Project="$(MSBuildThisFileDirectory)../Build.Local.props" Condition="Exists('$(MSBuildThisFileDirectory)../Build.Local.props')" />
-  <PropertyGroup>
+  <Import Project="$(MSBuildThisFileDirectory)Build.Local.props" Condition="Exists('$(MSBuildThisFileDirectory)Build.Local.props')" />
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'RimCrowCompanion.Legacy' or '$(MSBuildProjectName)' == 'RimCrowCompanion.Waylith'">
     <AssemblyName>RimCrowCompanion</AssemblyName>
     <RootNamespace>RimCrowCompanion</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
