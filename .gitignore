@@ -1,0 +1,6 @@
+# Visual Studio / MSBuild output
+**/bin/
+**/obj/
+**/.vs/
+**/packages/
+**/.git-legacy-history/
