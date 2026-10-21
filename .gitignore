@@ -4,3 +4,5 @@
 **/.vs/
 **/packages/
 **/.git-legacy-history/
+.ai-usage/
+Build.Local.props

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputPath>bin/$(Configuration)/</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(RimWorld17Dir)/Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityStubs">
+      <HintPath>$(RimWorld17Dir)/UnityStubs.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(Harmony17Path)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <Target Name="ValidateGameReferences" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="'$(RimWorld17Dir)' == '' or !Exists('$(RimWorld17Dir)/Assembly-CSharp.dll') or !Exists('$(RimWorld17Dir)/UnityStubs.dll')" Text="Set RimWorld17Dir to the RimWorld 1.7 game directory in Build.Local.props or with -p:RimWorld17Dir=..." />
+    <Error Condition="'$(Harmony17Path)' == '' or !Exists('$(Harmony17Path)')" Text="Set Harmony17Path to Harmony 1.7's 0Harmony.dll in Build.Local.props or with -p:Harmony17Path=..." />
+  </Target>
+</Project>

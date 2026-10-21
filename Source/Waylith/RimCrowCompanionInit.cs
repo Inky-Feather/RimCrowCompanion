@@ -51,22 +51,9 @@ namespace RimCrowCompanion
             "visual exceptions"
         };
 
-        private static readonly string[] KnownDiagnosticsHints =
-        {
-            "visualexceptions",
-            "visual exceptions",
-            "moderrorchecker",
-            "mod error checker"
-        };
-
         public static bool HasVisualExceptions()
         {
             return HasLoadedModHint(VisualExceptionsHints);
-        }
-
-        public static bool HasKnownDiagnosticsMod()
-        {
-            return HasLoadedModHint(KnownDiagnosticsHints);
         }
 
         private static bool HasLoadedModHint(IEnumerable<string> hints)
@@ -1211,15 +1198,13 @@ namespace RimCrowCompanion
         private readonly string settingsCategoryName;
         private static string dataRootPath;
         private static string logFilePath;
-        private static string prevLogFilePath; 
+        private static string prevLogFilePath;
         private static readonly object fileLock = new object();
-        private static readonly MethodInfo GetStackTraceLogTypeMethod = typeof(Application).GetMethod("GetStackTraceLogType", BindingFlags.Public | BindingFlags.Static);
         private static readonly MethodInfo ExecuteWhenFinishedMethod = AccessTools.Method(typeof(LongEventHandler), "ExecuteWhenFinished", new Type[] { typeof(Action) });
         private static readonly PropertyInfo SaveDataFolderPathProperty = AccessTools.Property(typeof(GenFilePaths), "SaveDataFolderPath");
         private static readonly MethodInfo FolderUnderSaveDataMethod = AccessTools.Method(typeof(GenFilePaths), "FolderUnderSaveData", new Type[] { typeof(string) });
 
         private static DateTime lastWriteTime = DateTime.MinValue;
-        private static int mainThreadId;
         private static volatile bool deepAnalysisReady;
         // 正则表达式：提取 [Package.Id]
         private static readonly Regex PackageIdRegex = new Regex(@"\[([a-zA-Z0-9\-_]+(?:\.[a-zA-Z0-9\-_]+)+)\]", RegexOptions.Compiled);
@@ -1230,19 +1215,12 @@ namespace RimCrowCompanion
         {
             settings = GetSettings<RimCrowCompanionSettings>();
             settingsCategoryName = content?.Name ?? "RimCrow Companion";
-            mainThreadId = Environment.CurrentManagedThreadId;
             deepAnalysisReady = false;
             dataRootPath = ResolveRuntimeDataRootPath();
             logFilePath = Path.Combine(dataRootPath, "RimCrow_Realtime.log");
             prevLogFilePath = Path.Combine(dataRootPath, "RimCrow_Realtime-prev.log");
             string logInitializationIssue = InitializeLogFiles();
             TryScheduleDeepAnalysisReady();
-
-            if (ShouldAdjustUnityStackTraceSettings())
-            {
-                EnsureStackTraceLogTypeAtLeastScriptOnly(LogType.Error);
-                EnsureStackTraceLogTypeAtLeastScriptOnly(LogType.Exception);
-            }
 
             AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
 
@@ -1412,7 +1390,8 @@ namespace RimCrowCompanion
 
         internal static bool CanRunDeepAnalysis()
         {
-            return deepAnalysisReady && Environment.CurrentManagedThreadId == mainThreadId;
+            // 使用游戏维护的主线程标志，不依赖模组构造时所处的线程。
+            return deepAnalysisReady && UnityData.IsInMainThread;
         }
 
         private static void CaptureObservedLog(string level, string text, string providedStack = null, bool forceShallow = false)
@@ -1583,52 +1562,6 @@ namespace RimCrowCompanion
             }
         }
 
-        private static bool ShouldAdjustUnityStackTraceSettings()
-        {
-            // `Application.SetStackTraceLogType()` 是全局开关，会影响整个 RimWorld 进程。
-            // 一旦玩家已安装 Visual Exceptions 这类诊断模组，就尽量不要抢着改全局设置。
-            if (ModCompatibilityDetector.HasKnownDiagnosticsMod())
-            {
-                ProcessLog("INFO", "[RimCrow Companion] 检测到其他诊断模组，跳过全局 StackTrace 设置以减少冲突。", "");
-                return false;
-            }
-
-            return true;
-        }
-
-        private static void EnsureStackTraceLogTypeAtLeastScriptOnly(LogType logType)
-        {
-            try
-            {
-                var current = TryGetStackTraceLogType(logType);
-
-                // 如果别的模组或玩家已经要求更完整的 Full 栈，就不要把它降级成 ScriptOnly。
-                if (current.HasValue && current.Value == StackTraceLogType.Full)
-                    return;
-
-                Application.SetStackTraceLogType(logType, StackTraceLogType.ScriptOnly);
-            }
-            catch (Exception ex)
-            {
-                ProcessLog("WARNING", $"[RimCrow Companion] 设置 {logType} 的 StackTraceLogType 失败: {ex.Message}", ex.StackTrace);
-            }
-        }
-
-        private static StackTraceLogType? TryGetStackTraceLogType(LogType logType)
-        {
-            if (GetStackTraceLogTypeMethod == null) return null;
-
-            try
-            {
-                object result = GetStackTraceLogTypeMethod.Invoke(null, new object[] { logType });
-                return result is StackTraceLogType stackTraceType ? stackTraceType : (StackTraceLogType?)null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
         // --- Context Hook Methods ---
         public static void Prefix_DefFromNode(XmlNode node, LoadableXmlAsset loadingAsset)
         {
@@ -1700,9 +1633,9 @@ namespace RimCrowCompanion
         private static void OnUnityLogMessage(string condition, string stackTrace, LogType type)
         {
             // 解决双重输出：如果堆栈中包含 Verse.Log，说明我们的 Harmony 已经拦截并处理过它了，直接丢弃
-            if (stackTrace != null && stackTrace.Contains("Verse.Log:")) return;
+            if (stackTrace != null && (stackTrace.Contains("Verse.Log:") || stackTrace.Contains("Verse.Log."))) return;
 
-            // 仅保留真正的 Unity 引擎崩溃 或 未被 Verse.Log 接管的异常
+            // 兼容层仅保留未被 Verse.Log 接管的引擎错误，避免重复记录。
             if (type == LogType.Exception || type == LogType.Error || type == LogType.Assert)
             {
                 CaptureObservedLog("ERROR", condition, stackTrace, forceShallow: true);
@@ -2339,4 +2272,3 @@ namespace RimCrowCompanion
         }
     }
 }
-

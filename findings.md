@@ -16,3 +16,11 @@
 ## 方案
 - Legacy 源码冻结，Waylith 源码独立；两项目保持相同程序集和命名空间，由加载目录互斥选择。
 - 不为极少数差异引入跨引擎接口层、运行时版本探测或新的运行时依赖。
+
+## 构建验证发现
+- 用 1.7 的真实 Assembly-CSharp/UnityStubs 编译恢复源码，确定性复现 CS0246：StackTraceLogType 不存在；移除旧全局堆栈 API 后 1.7 构建成功。
+- 1.6 原样源码构建成功。1.5.4409 的 DirectXmlToObject 没有 ValidateListNode，原先 nameof 在编译阶段失败；Legacy 只将该可选 Hook 的 nameof 换成相同字符串，不改变 1.6 运行行为，1.5 可按已有空值判断跳过。
+- 自动检查将这一处编译兼容修正归一化后，与恢复基线的源码哈希比较，防止 Waylith 修改混入 Legacy。
+- 复用本机已有 Krafs.Rimworld.Ref（1.5.4409 / 1.6.4871）和 Lib.Harmony 2.4.2，仅作编译引用，不随模组分发。
+- 独立 .NET SDK 10.0.402 位于 C:/Path/To/dotnet-sdk；官方 ZIP 的 SHA512 与微软发布元数据一致，未替换系统 SDK。
+- 版本路由参照实际安装的 Harmony 的 LoadFolders.xml；旧 Wiki 链接 404，新 Wiki 页面直接抓取 403，未声称已读到其正文。

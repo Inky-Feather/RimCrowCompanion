@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <OutputPath>bin/$(Configuration)/$(RimWorldVersion)/</OutputPath>
+    <RimWorldReferenceVersion Condition="'$(RimWorldVersion)' == '1.5'">1.5.4409</RimWorldReferenceVersion>
+    <RimWorldReferenceVersion Condition="'$(RimWorldVersion)' == '1.6'">1.6.4871</RimWorldReferenceVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="$(RimWorldReferenceVersion)" PrivateAssets="all" IncludeAssets="compile" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" PrivateAssets="all" IncludeAssets="compile" />
+  </ItemGroup>
+  <Target Name="ValidateGameVersion" BeforeTargets="CollectPackageReferences">
+    <Error Condition="'$(RimWorldVersion)' != '1.5' and '$(RimWorldVersion)' != '1.6'" Text="Legacy only supports RimWorldVersion=1.5 or 1.6." />
+  </Target>
+</Project>
