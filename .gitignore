@@ -5,4 +5,24 @@
 **/packages/
 **/.git-legacy-history/
 .ai-usage/
-/Source/Build.Local.props
+**/Build.Local.props
+
+# 本机配置、凭据与诊断输出
+.env
+.env.*
+!.env.example
+*.user
+*.suo
+*.log
+*.log.*
+*.binlog
+*.pdb
+*.pfx
+*.p12
+*.key
+*.pem
+*.bundle
+
+# 游戏存档与备份
+*.rws
+*.rws.*

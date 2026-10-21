@@ -26,7 +26,7 @@ legacySource = legacySource.Replace("typeof(DirectXmlToObject), \"ValidateListNo
                                     "typeof(DirectXmlToObject), nameof(DirectXmlToObject.ValidateListNode)");
 Check(Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(legacySource))) ==
       "9C9E12DA36C1A90C441F79A4781B657A78822AE80FE295E71B881B298015281F",
-      "Frozen legacy source changed; review against baseline 5084106 before updating this check.");
+      "Frozen legacy source changed; review against the restored source baseline before updating this check.");
 
 foreach (var version in versions)
 {
